@@ -18,21 +18,19 @@ export default function TelaRobotica({ usuario }) {
 
   async function carregarDados() {
     const hoje = new Date().toISOString().split('T')[0]
-    const [m, p, prod] = await Promise.all([
+    const [m, p, prod, t] = await Promise.all([
       supabase.from('membros').select('*').eq('frente', 'robotica').eq('ativo', true).order('nome'),
       supabase.from('projetos').select('*').in('frente', ['robotica', 'ambos']).eq('status', 'ativo'),
-      supabase.from('producao_diaria').select('*, membros(nome)').eq('data', hoje)
+      supabase.from('producao_diaria').select('*, membros(nome)').eq('data', hoje),
+      supabase.from('tarefas').select('*, membros(nome, frente)')
     ])
+
     const membroIds = (m.data || []).map(mb => mb.id)
-    const { data: tarefasData, error: tarefasError } = membroIds.length > 0
-      ? await supabase.from('tarefas').select('*, membros(nome, frente)').in('responsavel_id', membroIds)
-      : { data: [] }
+    const tarefasFiltradas = (t.data || []).filter(tarefa => membroIds.includes(tarefa.responsavel_id))
 
     setMembros(m.data || [])
     setProjetos(p.data || [])
-    setTarefas(tarefasData || [])
-    console.log('erro tarefas:', tarefasError)
-    console.log('membrosIds:', membroIds, 'tarefas:', tarefasData)
+    setTarefas(tarefasFiltradas)
     setProducao(prod.data || [])
     setCarregando(false)
   }
