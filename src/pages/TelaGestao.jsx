@@ -45,7 +45,7 @@ export default function TelaGestao() {
     const [m, p, t] = await Promise.all([
       supabase.from('membros').select('*').eq('ativo', true).order('nome'),
       supabase.from('projetos').select('*').order('criado_em', { ascending: false }),
-      supabase.from('tarefas').select('*, membros(nome), projetos(nome)').order('criado_em', { ascending: false })
+      supabase.from('tarefas').select('*').order('criado_em', { ascending: false })
     ])
     setMembros(m.data || [])
     setProjetos(p.data || [])
