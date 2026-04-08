@@ -200,12 +200,12 @@ export default function TelaDesignProg({ usuario }) {
                           <div className="flex items-center gap-2">
                             <div className="text-sm font-medium text-white">{t.titulo}</div>
                             {t.data_inicio && new Date(t.data_inicio + 'T12:00:00') > new Date() && (
-                              {t.data_inicio && new Date(t.data_inicio + 'T12:00:00') > new Date() && (
+                              <span className="text-xs bg-orange-900 text-orange-300 px-2 py-0.5 rounded-full">⏳ Aguardando início</span>
                             )}
                           </div>
                           {t.prazo && (
                             <div className="text-xs text-gray-500 mt-0.5">
-                              Prazo: {new Date(t.prazo).toLocaleDateString('pt-BR')}
+                              Prazo: {new Date(t.prazo + 'T12:00:00').toLocaleDateString('pt-BR')}
                             </div>
                           )}
                         </div>
