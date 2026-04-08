@@ -18,10 +18,9 @@ export default function TelaVisaoGeral({ usuario }) {
   }, [])
 
   async function carregarDados() {
-    const hoje = new Date()
     const segunda = new Date(hoje)
     segunda.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7))
-    const semanaInicio = segunda.toISOString().split('T')[0]
+    const semanaInicio = `${segunda.getFullYear()}-${String(segunda.getMonth() + 1).padStart(2, '0')}-${String(segunda.getDate()).padStart(2, '0')}`
 
     const [m, t, mt, p] = await Promise.all([
       supabase.from('membros').select('*').eq('ativo', true).order('nome'),
