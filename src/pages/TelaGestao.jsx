@@ -8,18 +8,29 @@ export default function TelaGestao() {
   const [tarefas, setTarefas] = useState([])
   const [carregando, setCarregando] = useState(true)
 
+  // Formulário projeto
   const [nomeProjeto, setNomeProjeto] = useState('')
   const [descProjeto, setDescProjeto] = useState('')
   const [frenteProjeto, setFrenteProjeto] = useState('robotica')
   const [inicioProjeto, setInicioProjeto] = useState('')
   const [fimProjeto, setFimProjeto] = useState('')
 
+  // Edição de projeto
+  const [editandoProjeto, setEditandoProjeto] = useState(null)
+  const [editNome, setEditNome] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editFrente, setEditFrente] = useState('')
+  const [editInicio, setEditInicio] = useState('')
+  const [editFim, setEditFim] = useState('')
+
+  // Formulário tarefa
   const [tituloTarefa, setTituloTarefa] = useState('')
   const [descTarefa, setDescTarefa] = useState('')
   const [projetoTarefa, setProjetoTarefa] = useState('')
   const [responsavelTarefa, setResponsavelTarefa] = useState('')
   const [prazoTarefa, setPrazoTarefa] = useState('')
 
+  // Formulário meta
   const [membroMeta, setMembroMeta] = useState('')
   const [descMeta, setDescMeta] = useState('')
   const [semanaInicioMeta, setSemanaInicioMeta] = useState('')
@@ -53,6 +64,50 @@ export default function TelaGestao() {
     carregarDados()
   }
 
+  function iniciarEdicao(p) {
+    setEditandoProjeto(p.id)
+    setEditNome(p.nome)
+    setEditDesc(p.descricao || '')
+    setEditFrente(p.frente)
+    setEditInicio(p.data_inicio || '')
+    setEditFim(p.data_fim || '')
+  }
+
+  async function salvarEdicao(projetoId) {
+    await supabase.from('projetos').update({
+      nome: editNome,
+      descricao: editDesc,
+      frente: editFrente,
+      data_inicio: editInicio,
+      data_fim: editFim || null
+    }).eq('id', projetoId)
+    setEditandoProjeto(null)
+    carregarDados()
+  }
+
+  async function arquivarProjeto(projetoId) {
+    await supabase.from('projetos').update({ status: 'arquivado' }).eq('id', projetoId)
+    carregarDados()
+  }
+
+  async function desarquivarProjeto(projetoId) {
+    await supabase.from('projetos').update({ status: 'ativo' }).eq('id', projetoId)
+    carregarDados()
+  }
+
+  async function excluirProjeto(projetoId) {
+    if (!window.confirm('Tem certeza? Isso vai excluir o projeto e todas as tarefas vinculadas.')) return
+    await supabase.from('tarefas').delete().eq('projeto_id', projetoId)
+    await supabase.from('projetos').delete().eq('id', projetoId)
+    carregarDados()
+  }
+
+  async function atualizarProgresso(projetoId, valor) {
+    const num = Math.min(100, Math.max(0, Number(valor)))
+    await supabase.from('projetos').update({ progresso_manual: num }).eq('id', projetoId)
+    carregarDados()
+  }
+
   async function criarTarefa() {
     if (!tituloTarefa || !responsavelTarefa || !prazoTarefa) return
     await supabase.from('tarefas').insert({
@@ -77,15 +132,12 @@ export default function TelaGestao() {
     alert('Meta criada com sucesso!')
   }
 
-  async function atualizarProgresso(projetoId, valor) {
-    const num = Math.min(100, Math.max(0, Number(valor)))
-    await supabase.from('projetos').update({ progresso_manual: num }).eq('id', projetoId)
-    carregarDados()
-  }
-
   const inputClass = "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
   const labelClass = "block text-gray-400 text-sm mb-1"
   const btnClass = "bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+
+  const projetosAtivos = projetos.filter(p => p.status === 'ativo')
+  const projetosArquivados = projetos.filter(p => p.status === 'arquivado')
 
   if (carregando) return <p className="text-gray-400">Carregando...</p>
 
@@ -145,38 +197,84 @@ export default function TelaGestao() {
           <div className="bg-gray-900 rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-4 text-blue-400">Projetos Ativos</h2>
             <div className="space-y-3">
-              {projetos.length === 0 && <p className="text-gray-500 text-sm">Nenhum projeto cadastrado.</p>}
-              {projetos.map(p => (
+              {projetosAtivos.length === 0 && <p className="text-gray-500 text-sm">Nenhum projeto ativo.</p>}
+              {projetosAtivos.map(p => (
                 <div key={p.id} className="bg-gray-800 rounded-xl p-4">
-                  <div className="font-medium">{p.nome}</div>
-                  <div className="text-sm text-gray-400 mt-1">
-                    {p.frente === 'robotica' ? 'Robótica' : p.frente === 'design_programacao' ? 'Design + Prog' : 'Ambos'}
-                  </div>
-                  {p.data_fim && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Prazo: {new Date(p.data_fim).toLocaleDateString('pt-BR')}
+                  {editandoProjeto === p.id ? (
+                    <div className="space-y-2">
+                      <input className={inputClass} value={editNome} onChange={e => setEditNome(e.target.value)} placeholder="Nome" />
+                      <textarea className={inputClass} rows={2} value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Descrição" />
+                      <select className={inputClass} value={editFrente} onChange={e => setEditFrente(e.target.value)}>
+                        <option value="robotica">Robótica</option>
+                        <option value="design_programacao">Design + Programação</option>
+                        <option value="ambos">Ambos</option>
+                      </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="date" className={inputClass} value={editInicio} onChange={e => setEditInicio(e.target.value)} />
+                        <input type="date" className={inputClass} value={editFim} onChange={e => setEditFim(e.target.value)} />
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => salvarEdicao(p.id)} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Salvar</button>
+                        <button onClick={() => setEditandoProjeto(null)} className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Cancelar</button>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      <div className="font-medium">{p.nome}</div>
+                      <div className="text-sm text-gray-400 mt-1">
+                        {p.frente === 'robotica' ? 'Robótica' : p.frente === 'design_programacao' ? 'Design + Prog' : 'Ambos'}
+                      </div>
+                      {p.data_fim && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Prazo: {new Date(p.data_fim).toLocaleDateString('pt-BR')}
+                        </div>
+                      )}
+                      <div className="mt-3">
+                        <label className="text-xs text-gray-400 mb-1 block">Progresso manual: {p.progresso_manual ?? 0}%</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range" min={0} max={100}
+                            value={p.progresso_manual ?? 0}
+                            onChange={e => atualizarProgresso(p.id, e.target.value)}
+                            className="flex-1 accent-blue-500"
+                          />
+                          <span className="text-sm font-bold text-blue-400 w-10 text-right">{p.progresso_manual ?? 0}%</span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
+                          <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: `${p.progresso_manual ?? 0}%` }} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => iniciarEdicao(p)} className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg">✏️ Editar</button>
+                        <button onClick={() => arquivarProjeto(p.id)} className="text-xs bg-yellow-900 hover:bg-yellow-800 text-yellow-300 px-3 py-1.5 rounded-lg">📦 Arquivar</button>
+                        <button onClick={() => excluirProjeto(p.id)} className="text-xs bg-red-900 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg">🗑️ Excluir</button>
+                      </div>
+                    </>
                   )}
-                  <div className="mt-3">
-                    <label className="text-xs text-gray-400 mb-1 block">Progresso manual: {p.progresso_manual ?? 0}%</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={p.progresso_manual ?? 0}
-                        onChange={e => atualizarProgresso(p.id, e.target.value)}
-                        className="flex-1 accent-blue-500"
-                      />
-                      <span className="text-sm font-bold text-blue-400 w-10 text-right">{p.progresso_manual ?? 0}%</span>
-                    </div>
-                    <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
-                      <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: `${p.progresso_manual ?? 0}%` }} />
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
+
+            {/* Projetos Arquivados */}
+            {projetosArquivados.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-lg font-bold mb-3 text-gray-500">Projetos Arquivados</h2>
+                <div className="space-y-3">
+                  {projetosArquivados.map(p => (
+                    <div key={p.id} className="bg-gray-800 opacity-60 rounded-xl p-4">
+                      <div className="font-medium text-gray-400">{p.nome}</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {p.frente === 'robotica' ? 'Robótica' : p.frente === 'design_programacao' ? 'Design + Prog' : 'Ambos'}
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => desarquivarProjeto(p.id)} className="text-xs bg-green-900 hover:bg-green-800 text-green-300 px-3 py-1.5 rounded-lg">♻️ Reativar</button>
+                        <button onClick={() => excluirProjeto(p.id)} className="text-xs bg-red-900 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg">🗑️ Excluir</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -199,7 +297,7 @@ export default function TelaGestao() {
                 <label className={labelClass}>Projeto (opcional)</label>
                 <select className={inputClass} value={projetoTarefa} onChange={e => setProjetoTarefa(e.target.value)}>
                   <option value="">Tarefa avulsa</option>
-                  {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                  {projetosAtivos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </div>
               <div>
