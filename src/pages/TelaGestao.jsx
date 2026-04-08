@@ -226,7 +226,7 @@ export default function TelaGestao() {
                       </div>
                       {p.data_fim && (
                         <div className="text-xs text-gray-500 mt-1">
-                          Prazo: {new Date(p.data_fim + 'T12:00:00').toLocaleDateString}
+                          Prazo: {new Date(p.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </div>
                       )}
                       <div className="mt-3">
