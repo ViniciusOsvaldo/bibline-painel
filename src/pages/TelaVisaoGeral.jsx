@@ -17,7 +17,9 @@ export default function TelaVisaoGeral({ usuario }) {
     return () => clearInterval(intervalo)
   }, [])
 
-  async function carregarDados() {
+ async function carregarDados() {
+  try {
+    const hoje = new Date()
     const segunda = new Date(hoje)
     segunda.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7))
     const semanaInicio = `${segunda.getFullYear()}-${String(segunda.getMonth() + 1).padStart(2, '0')}-${String(segunda.getDate()).padStart(2, '0')}`
@@ -33,8 +35,12 @@ export default function TelaVisaoGeral({ usuario }) {
     setTarefas(t.data || [])
     setMetas(mt.data || [])
     setProducao(p.data || [])
+  } catch (erro) {
+    console.error('Erro ao carregar dados:', erro)
+  } finally {
     setCarregando(false)
   }
+}
 
   function getTarefasMembro(membroId) {
     return tarefas.filter(t => t.responsavel_id === membroId)
