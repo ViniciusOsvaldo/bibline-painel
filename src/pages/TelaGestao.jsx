@@ -8,21 +8,18 @@ export default function TelaGestao() {
   const [tarefas, setTarefas] = useState([])
   const [carregando, setCarregando] = useState(true)
 
-  // Formulário projeto
   const [nomeProjeto, setNomeProjeto] = useState('')
   const [descProjeto, setDescProjeto] = useState('')
   const [frenteProjeto, setFrenteProjeto] = useState('robotica')
   const [inicioProjeto, setInicioProjeto] = useState('')
   const [fimProjeto, setFimProjeto] = useState('')
 
-  // Formulário tarefa
   const [tituloTarefa, setTituloTarefa] = useState('')
   const [descTarefa, setDescTarefa] = useState('')
   const [projetoTarefa, setProjetoTarefa] = useState('')
   const [responsavelTarefa, setResponsavelTarefa] = useState('')
   const [prazoTarefa, setPrazoTarefa] = useState('')
 
-  // Formulário meta
   const [membroMeta, setMembroMeta] = useState('')
   const [descMeta, setDescMeta] = useState('')
   const [semanaInicioMeta, setSemanaInicioMeta] = useState('')
@@ -80,6 +77,12 @@ export default function TelaGestao() {
     alert('Meta criada com sucesso!')
   }
 
+  async function atualizarProgresso(projetoId, valor) {
+    const num = Math.min(100, Math.max(0, Number(valor)))
+    await supabase.from('projetos').update({ progresso_manual: num }).eq('id', projetoId)
+    carregarDados()
+  }
+
   const inputClass = "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
   const labelClass = "block text-gray-400 text-sm mb-1"
   const btnClass = "bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -109,25 +112,36 @@ export default function TelaGestao() {
           <div className="bg-gray-900 rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-4 text-blue-400">Novo Projeto</h2>
             <div className="space-y-3">
-              <div><label className={labelClass}>Nome do projeto *</label>
-                <input className={inputClass} value={nomeProjeto} onChange={e => setNomeProjeto(e.target.value)} placeholder="Ex: Vídeo didático de Python" /></div>
-              <div><label className={labelClass}>Descrição</label>
-                <textarea className={inputClass} rows={2} value={descProjeto} onChange={e => setDescProjeto(e.target.value)} placeholder="Descreva o projeto..." /></div>
-              <div><label className={labelClass}>Frente</label>
+              <div>
+                <label className={labelClass}>Nome do projeto *</label>
+                <input className={inputClass} value={nomeProjeto} onChange={e => setNomeProjeto(e.target.value)} placeholder="Ex: Vídeo didático de Python" />
+              </div>
+              <div>
+                <label className={labelClass}>Descrição</label>
+                <textarea className={inputClass} rows={2} value={descProjeto} onChange={e => setDescProjeto(e.target.value)} placeholder="Descreva o projeto..." />
+              </div>
+              <div>
+                <label className={labelClass}>Frente</label>
                 <select className={inputClass} value={frenteProjeto} onChange={e => setFrenteProjeto(e.target.value)}>
                   <option value="robotica">Robótica</option>
                   <option value="design_programacao">Design + Programação</option>
                   <option value="ambos">Ambos</option>
-                </select></div>
+                </select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelClass}>Data início *</label>
-                  <input type="date" className={inputClass} value={inicioProjeto} onChange={e => setInicioProjeto(e.target.value)} /></div>
-                <div><label className={labelClass}>Data fim</label>
-                  <input type="date" className={inputClass} value={fimProjeto} onChange={e => setFimProjeto(e.target.value)} /></div>
+                <div>
+                  <label className={labelClass}>Data início *</label>
+                  <input type="date" className={inputClass} value={inicioProjeto} onChange={e => setInicioProjeto(e.target.value)} />
+                </div>
+                <div>
+                  <label className={labelClass}>Data fim</label>
+                  <input type="date" className={inputClass} value={fimProjeto} onChange={e => setFimProjeto(e.target.value)} />
+                </div>
               </div>
               <button onClick={criarProjeto} className={btnClass}>Criar Projeto</button>
             </div>
           </div>
+
           <div className="bg-gray-900 rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-4 text-blue-400">Projetos Ativos</h2>
             <div className="space-y-3">
@@ -135,8 +149,31 @@ export default function TelaGestao() {
               {projetos.map(p => (
                 <div key={p.id} className="bg-gray-800 rounded-xl p-4">
                   <div className="font-medium">{p.nome}</div>
-                  <div className="text-sm text-gray-400 mt-1">{p.frente === 'robotica' ? 'Robótica' : p.frente === 'design_programacao' ? 'Design + Prog' : 'Ambos'}</div>
-                  {p.data_fim && <div className="text-xs text-gray-500 mt-1">Prazo: {new Date(p.data_fim).toLocaleDateString('pt-BR')}</div>}
+                  <div className="text-sm text-gray-400 mt-1">
+                    {p.frente === 'robotica' ? 'Robótica' : p.frente === 'design_programacao' ? 'Design + Prog' : 'Ambos'}
+                  </div>
+                  {p.data_fim && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Prazo: {new Date(p.data_fim).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
+                  <div className="mt-3">
+                    <label className="text-xs text-gray-400 mb-1 block">Progresso manual: {p.progresso_manual ?? 0}%</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={p.progresso_manual ?? 0}
+                        onChange={e => atualizarProgresso(p.id, e.target.value)}
+                        className="flex-1 accent-blue-500"
+                      />
+                      <span className="text-sm font-bold text-blue-400 w-10 text-right">{p.progresso_manual ?? 0}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
+                      <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: `${p.progresso_manual ?? 0}%` }} />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -150,22 +187,32 @@ export default function TelaGestao() {
           <div className="bg-gray-900 rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-4 text-green-400">Nova Tarefa</h2>
             <div className="space-y-3">
-              <div><label className={labelClass}>Título *</label>
-                <input className={inputClass} value={tituloTarefa} onChange={e => setTituloTarefa(e.target.value)} placeholder="Ex: Criar roteiro do vídeo" /></div>
-              <div><label className={labelClass}>Descrição</label>
-                <textarea className={inputClass} rows={2} value={descTarefa} onChange={e => setDescTarefa(e.target.value)} /></div>
-              <div><label className={labelClass}>Projeto (opcional)</label>
+              <div>
+                <label className={labelClass}>Título *</label>
+                <input className={inputClass} value={tituloTarefa} onChange={e => setTituloTarefa(e.target.value)} placeholder="Ex: Criar roteiro do vídeo" />
+              </div>
+              <div>
+                <label className={labelClass}>Descrição</label>
+                <textarea className={inputClass} rows={2} value={descTarefa} onChange={e => setDescTarefa(e.target.value)} />
+              </div>
+              <div>
+                <label className={labelClass}>Projeto (opcional)</label>
                 <select className={inputClass} value={projetoTarefa} onChange={e => setProjetoTarefa(e.target.value)}>
                   <option value="">Tarefa avulsa</option>
                   {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                </select></div>
-              <div><label className={labelClass}>Responsável *</label>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Responsável *</label>
                 <select className={inputClass} value={responsavelTarefa} onChange={e => setResponsavelTarefa(e.target.value)}>
                   <option value="">Selecione...</option>
                   {membros.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-                </select></div>
-              <div><label className={labelClass}>Prazo *</label>
-                <input type="date" className={inputClass} value={prazoTarefa} onChange={e => setPrazoTarefa(e.target.value)} /></div>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Prazo *</label>
+                <input type="date" className={inputClass} value={prazoTarefa} onChange={e => setPrazoTarefa(e.target.value)} />
+              </div>
               <button onClick={criarTarefa} className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Criar Tarefa</button>
             </div>
           </div>
@@ -197,15 +244,21 @@ export default function TelaGestao() {
         <div className="bg-gray-900 rounded-2xl p-6 max-w-lg">
           <h2 className="text-lg font-bold mb-4 text-purple-400">Nova Meta Semanal</h2>
           <div className="space-y-3">
-            <div><label className={labelClass}>Membro *</label>
+            <div>
+              <label className={labelClass}>Membro *</label>
               <select className={inputClass} value={membroMeta} onChange={e => setMembroMeta(e.target.value)}>
                 <option value="">Selecione...</option>
                 {membros.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-              </select></div>
-            <div><label className={labelClass}>Meta *</label>
-              <textarea className={inputClass} rows={3} value={descMeta} onChange={e => setDescMeta(e.target.value)} placeholder="Descreva a meta da semana..." /></div>
-            <div><label className={labelClass}>Início da semana *</label>
-              <input type="date" className={inputClass} value={semanaInicioMeta} onChange={e => setSemanaInicioMeta(e.target.value)} /></div>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Meta *</label>
+              <textarea className={inputClass} rows={3} value={descMeta} onChange={e => setDescMeta(e.target.value)} placeholder="Descreva a meta da semana..." />
+            </div>
+            <div>
+              <label className={labelClass}>Início da semana *</label>
+              <input type="date" className={inputClass} value={semanaInicioMeta} onChange={e => setSemanaInicioMeta(e.target.value)} />
+            </div>
             <button onClick={criarMeta} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Criar Meta</button>
           </div>
         </div>

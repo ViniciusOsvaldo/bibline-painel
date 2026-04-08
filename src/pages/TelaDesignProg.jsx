@@ -61,8 +61,8 @@ export default function TelaDesignProg({ usuario }) {
   }
 
   function getProgressoProjeto(projetoId) {
-    const ts = tarefas.filter(t => t.projeto_id === projetoId)
-    return getProgresso(ts)
+    const projeto = projetos.find(p => p.id === projetoId)
+    return projeto?.progresso_manual ?? 0
   }
 
   function getProducaoHoje(membroId) {
