@@ -31,6 +31,7 @@ export default function TelaRobotica({ usuario }) {
     setMembros(m.data || [])
     setProjetos(p.data || [])
     setTarefas(tarefasData || [])
+    console.log('membrosIds:', membroIds, 'tarefas:', tarefasData)
     setProducao(prod.data || [])
     setCarregando(false)
   }
