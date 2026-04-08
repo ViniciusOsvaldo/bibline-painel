@@ -24,13 +24,14 @@ export default function TelaRobotica({ usuario }) {
       supabase.from('producao_diaria').select('*, membros(nome)').eq('data', hoje)
     ])
     const membroIds = (m.data || []).map(mb => mb.id)
-    const { data: tarefasData } = membroIds.length > 0
+    const { data: tarefasData, error: tarefasError } = membroIds.length > 0
       ? await supabase.from('tarefas').select('*, membros(nome, frente)').in('responsavel_id', membroIds)
       : { data: [] }
 
     setMembros(m.data || [])
     setProjetos(p.data || [])
     setTarefas(tarefasData || [])
+    console.log('erro tarefas:', tarefasError)
     console.log('membrosIds:', membroIds, 'tarefas:', tarefasData)
     setProducao(prod.data || [])
     setCarregando(false)
