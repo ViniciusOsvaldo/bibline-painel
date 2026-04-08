@@ -18,15 +18,19 @@ export default function TelaRobotica({ usuario }) {
 
   async function carregarDados() {
     const hoje = new Date().toISOString().split('T')[0]
-    const [m, p, t, prod] = await Promise.all([
+    const [m, p, prod] = await Promise.all([
       supabase.from('membros').select('*').eq('frente', 'robotica').eq('ativo', true).order('nome'),
       supabase.from('projetos').select('*').in('frente', ['robotica', 'ambos']).eq('status', 'ativo'),
-      supabase.from('tarefas').select('*, membros!inner(nome, frente)').eq('membros.frente', 'robotica'),
       supabase.from('producao_diaria').select('*, membros(nome)').eq('data', hoje)
     ])
+    const membroIds = (m.data || []).map(mb => mb.id)
+    const { data: tarefasData } = membroIds.length > 0
+      ? await supabase.from('tarefas').select('*, membros(nome, frente)').in('responsavel_id', membroIds)
+      : { data: [] }
+
     setMembros(m.data || [])
     setProjetos(p.data || [])
-    setTarefas(t.data || [])
+    setTarefas(tarefasData || [])
     setProducao(prod.data || [])
     setCarregando(false)
   }
@@ -152,7 +156,7 @@ export default function TelaRobotica({ usuario }) {
                   </div>
                   {p.data_fim && (
                     <div className="text-xs text-gray-500 mt-2">
-                      Prazo: {new Date(p.data_fim + 'T12:00:00').toLocaleDateString ('pt-BR')}
+                      Prazo: {new Date(p.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </div>
                   )}
                 </div>
@@ -205,7 +209,7 @@ export default function TelaRobotica({ usuario }) {
                           </div>
                           {t.prazo && (
                             <div className="text-xs text-gray-500 mt-0.5">
-                              Prazo: {new Date(t.prazo).toLocaleDateString('pt-BR')}
+                              Prazo: {new Date(t.prazo + 'T12:00:00').toLocaleDateString('pt-BR')}
                             </div>
                           )}
                         </div>
