@@ -7,6 +7,7 @@ export default function TelaDesignProg({ usuario }) {
   const [projetos, setProjetos] = useState([])
   const [producao, setProducao] = useState([])
   const [descProducao, setDescProducao] = useState('')
+  const [editandoProducao, setEditandoProducao] = useState(false)
   const [carregando, setCarregando] = useState(true)
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function TelaDesignProg({ usuario }) {
       descricao: descProducao
     }, { onConflict: 'membro_id,data' })
     setDescProducao('')
+    setEditandoProducao(false)
     carregarDados()
   }
 
@@ -67,8 +69,18 @@ export default function TelaDesignProg({ usuario }) {
     return producao.find(p => p.membro_id === membroId)
   }
 
-  const corStatus = { a_fazer: 'bg-gray-700 text-gray-300', em_andamento: 'bg-blue-900 text-blue-300', concluida: 'bg-green-900 text-green-300', bloqueada: 'bg-red-900 text-red-300' }
-  const labelStatus = { a_fazer: 'A fazer', em_andamento: 'Em andamento', concluida: 'Concluída', bloqueada: 'Bloqueada' }
+  const corStatus = {
+    a_fazer: 'bg-gray-700 text-gray-300',
+    em_andamento: 'bg-blue-900 text-blue-300',
+    concluida: 'bg-green-900 text-green-300',
+    bloqueada: 'bg-red-900 text-red-300'
+  }
+  const labelStatus = {
+    a_fazer: 'A fazer',
+    em_andamento: 'Em andamento',
+    concluida: 'Concluída',
+    bloqueada: 'Bloqueada'
+  }
 
   if (carregando) return <div className="text-gray-400 text-center mt-20">Carregando...</div>
 
@@ -85,8 +97,21 @@ export default function TelaDesignProg({ usuario }) {
       {minhas && (
         <div className="bg-green-950 border border-green-800 rounded-2xl p-5">
           <h2 className="text-lg font-bold text-green-400 mb-3">📝 O que você produziu hoje?</h2>
-          {getProducaoHoje(usuario.id) ? (
-            <div className="text-green-300 text-sm">✅ Já registrado: <span className="text-white">{getProducaoHoje(usuario.id).descricao}</span></div>
+          {getProducaoHoje(usuario.id) && !editandoProducao ? (
+            <div className="flex items-center justify-between">
+              <div className="text-green-300 text-sm">
+                ✅ Já registrado: <span className="text-white">{getProducaoHoje(usuario.id).descricao}</span>
+              </div>
+              <button
+                onClick={() => {
+                  setEditandoProducao(true)
+                  setDescProducao(getProducaoHoje(usuario.id).descricao)
+                }}
+                className="text-xs text-green-400 hover:text-green-300 ml-4 underline"
+              >
+                Editar
+              </button>
+            </div>
           ) : (
             <div className="flex gap-3">
               <input
@@ -96,8 +121,11 @@ export default function TelaDesignProg({ usuario }) {
                 onChange={e => setDescProducao(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && registrarProducao()}
               />
-              <button onClick={registrarProducao} className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                Registrar
+              <button
+                onClick={registrarProducao}
+                className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                {editandoProducao ? 'Salvar' : 'Registrar'}
               </button>
             </div>
           )}
@@ -122,7 +150,11 @@ export default function TelaDesignProg({ usuario }) {
                   <div className="w-full bg-gray-800 rounded-full h-2">
                     <div className="h-2 rounded-full bg-green-500 transition-all" style={{ width: `${pct}%` }} />
                   </div>
-                  {p.data_fim && <div className="text-xs text-gray-500 mt-2">Prazo: {new Date(p.data_fim).toLocaleDateString('pt-BR')}</div>}
+                  {p.data_fim && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      Prazo: {new Date(p.data_fim).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -145,7 +177,9 @@ export default function TelaDesignProg({ usuario }) {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-white text-lg">{m.nome}</span>
-                    {ehVoce && <span className="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full">Você</span>}
+                    {ehVoce && (
+                      <span className="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full">Você</span>
+                    )}
                   </div>
                   <div className="text-right">
                     <span className="text-xl font-bold text-green-400">{pct}%</span>
@@ -164,7 +198,11 @@ export default function TelaDesignProg({ usuario }) {
                       <div key={t.id} className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
                         <div>
                           <div className="text-sm font-medium text-white">{t.titulo}</div>
-                          {t.prazo && <div className="text-xs text-gray-500 mt-0.5">Prazo: {new Date(t.prazo).toLocaleDateString('pt-BR')}</div>}
+                          {t.prazo && (
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              Prazo: {new Date(t.prazo).toLocaleDateString('pt-BR')}
+                            </div>
+                          )}
                         </div>
                         {ehVoce ? (
                           <select
@@ -178,7 +216,9 @@ export default function TelaDesignProg({ usuario }) {
                             <option value="bloqueada">Bloqueada</option>
                           </select>
                         ) : (
-                          <span className={`text-xs px-2 py-1 rounded-full ${corStatus[t.status]}`}>{labelStatus[t.status]}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${corStatus[t.status]}`}>
+                            {labelStatus[t.status]}
+                          </span>
                         )}
                       </div>
                     ))}
