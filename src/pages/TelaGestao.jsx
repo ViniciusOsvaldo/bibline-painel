@@ -28,12 +28,14 @@ export default function TelaGestao() {
   const [descTarefa, setDescTarefa] = useState('')
   const [projetoTarefa, setProjetoTarefa] = useState('')
   const [responsavelTarefa, setResponsavelTarefa] = useState('')
+  const [inicioTarefa, setInicioTarefa] = useState('')
   const [prazoTarefa, setPrazoTarefa] = useState('')
 
   // Formulário meta
   const [membroMeta, setMembroMeta] = useState('')
   const [descMeta, setDescMeta] = useState('')
   const [semanaInicioMeta, setSemanaInicioMeta] = useState('')
+  const [semanaFimMeta, setSemanaFimMeta] = useState('')
 
   useEffect(() => {
     carregarDados()
@@ -115,9 +117,10 @@ export default function TelaGestao() {
       descricao: descTarefa,
       projeto_id: projetoTarefa || null,
       responsavel_id: responsavelTarefa,
+      data_inicio: inicioTarefa || null,
       prazo: prazoTarefa
     })
-    setTituloTarefa(''); setDescTarefa(''); setProjetoTarefa(''); setResponsavelTarefa(''); setPrazoTarefa('')
+    setTituloTarefa(''); setDescTarefa(''); setProjetoTarefa(''); setResponsavelTarefa(''); setInicioTarefa(''); setPrazoTarefa('')
     carregarDados()
   }
 
@@ -126,9 +129,10 @@ export default function TelaGestao() {
     await supabase.from('metas_semanais').insert({
       membro_id: membroMeta,
       descricao: descMeta,
-      semana_inicio: semanaInicioMeta
+      semana_inicio: semanaInicioMeta,
+      data_fim: semanaFimMeta || null
     })
-    setMembroMeta(''); setDescMeta(''); setSemanaInicioMeta('')
+    setMembroMeta(''); setDescMeta(''); setSemanaInicioMeta(''); setSemanaFimMeta('')
     alert('Meta criada com sucesso!')
   }
 
@@ -255,7 +259,6 @@ export default function TelaGestao() {
               ))}
             </div>
 
-            {/* Projetos Arquivados */}
             {projetosArquivados.length > 0 && (
               <div className="mt-6">
                 <h2 className="text-lg font-bold mb-3 text-gray-500">Projetos Arquivados</h2>
@@ -307,9 +310,15 @@ export default function TelaGestao() {
                   {membros.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
                 </select>
               </div>
-              <div>
-                <label className={labelClass}>Prazo *</label>
-                <input type="date" className={inputClass} value={prazoTarefa} onChange={e => setPrazoTarefa(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Data início</label>
+                  <input type="date" className={inputClass} value={inicioTarefa} onChange={e => setInicioTarefa(e.target.value)} />
+                </div>
+                <div>
+                  <label className={labelClass}>Prazo *</label>
+                  <input type="date" className={inputClass} value={prazoTarefa} onChange={e => setPrazoTarefa(e.target.value)} />
+                </div>
               </div>
               <button onClick={criarTarefa} className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Criar Tarefa</button>
             </div>
@@ -318,20 +327,27 @@ export default function TelaGestao() {
             <h2 className="text-lg font-bold mb-4 text-green-400">Tarefas Recentes</h2>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {tarefas.length === 0 && <p className="text-gray-500 text-sm">Nenhuma tarefa cadastrada.</p>}
-              {tarefas.map(t => (
-                <div key={t.id} className="bg-gray-800 rounded-xl p-4">
-                  <div className="font-medium">{t.titulo}</div>
-                  <div className="text-sm text-gray-400 mt-1">{t.membros?.nome} {t.projetos ? `· ${t.projetos.nome}` : '· Avulsa'}</div>
-                  <div className="text-xs text-gray-500 mt-1">Prazo: {new Date(t.prazo).toLocaleDateString('pt-BR')}</div>
-                  <span className={`text-xs px-2 py-1 rounded-full mt-2 inline-block ${
-                    t.status === 'concluida' ? 'bg-green-900 text-green-300' :
-                    t.status === 'em_andamento' ? 'bg-blue-900 text-blue-300' :
-                    t.status === 'bloqueada' ? 'bg-red-900 text-red-300' :
-                    'bg-gray-700 text-gray-300'}`}>
-                    {t.status === 'a_fazer' ? 'A fazer' : t.status === 'em_andamento' ? 'Em andamento' : t.status === 'concluida' ? 'Concluída' : 'Bloqueada'}
-                  </span>
-                </div>
-              ))}
+              {tarefas.map(t => {
+                const aguardando = t.data_inicio && new Date(t.data_inicio + 'T12:00:00') > new Date()
+                return (
+                  <div key={t.id} className="bg-gray-800 rounded-xl p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium">{t.titulo}</div>
+                      {aguardando && <span className="text-xs bg-orange-900 text-orange-300 px-2 py-0.5 rounded-full">⏳ Aguardando início</span>}
+                    </div>
+                    <div className="text-sm text-gray-400 mt-1">{t.membros?.nome} {t.projetos ? `· ${t.projetos.nome}` : '· Avulsa'}</div>
+                    {t.data_inicio && <div className="text-xs text-gray-500 mt-1">Início: {new Date(t.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')}</div>}
+                    <div className="text-xs text-gray-500 mt-1">Prazo: {new Date(t.prazo + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                    <span className={`text-xs px-2 py-1 rounded-full mt-2 inline-block ${
+                      t.status === 'concluida' ? 'bg-green-900 text-green-300' :
+                      t.status === 'em_andamento' ? 'bg-blue-900 text-blue-300' :
+                      t.status === 'bloqueada' ? 'bg-red-900 text-red-300' :
+                      'bg-gray-700 text-gray-300'}`}>
+                      {t.status === 'a_fazer' ? 'A fazer' : t.status === 'em_andamento' ? 'Em andamento' : t.status === 'concluida' ? 'Concluída' : 'Bloqueada'}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -353,9 +369,15 @@ export default function TelaGestao() {
               <label className={labelClass}>Meta *</label>
               <textarea className={inputClass} rows={3} value={descMeta} onChange={e => setDescMeta(e.target.value)} placeholder="Descreva a meta da semana..." />
             </div>
-            <div>
-              <label className={labelClass}>Início da semana *</label>
-              <input type="date" className={inputClass} value={semanaInicioMeta} onChange={e => setSemanaInicioMeta(e.target.value)} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Data início *</label>
+                <input type="date" className={inputClass} value={semanaInicioMeta} onChange={e => setSemanaInicioMeta(e.target.value)} />
+              </div>
+              <div>
+                <label className={labelClass}>Data fim</label>
+                <input type="date" className={inputClass} value={semanaFimMeta} onChange={e => setSemanaFimMeta(e.target.value)} />
+              </div>
             </div>
             <button onClick={criarMeta} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Criar Meta</button>
           </div>

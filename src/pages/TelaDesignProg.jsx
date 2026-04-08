@@ -197,7 +197,12 @@ export default function TelaDesignProg({ usuario }) {
                     {ts.map(t => (
                       <div key={t.id} className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
                         <div>
-                          <div className="text-sm font-medium text-white">{t.titulo}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-white">{t.titulo}</div>
+                            {t.data_inicio && new Date(t.data_inicio + 'T12:00:00') > new Date() && (
+                              {t.data_inicio && new Date(t.data_inicio + 'T12:00:00') > new Date() && (
+                            )}
+                          </div>
                           {t.prazo && (
                             <div className="text-xs text-gray-500 mt-0.5">
                               Prazo: {new Date(t.prazo).toLocaleDateString('pt-BR')}

@@ -152,7 +152,7 @@ export default function TelaRobotica({ usuario }) {
                   </div>
                   {p.data_fim && (
                     <div className="text-xs text-gray-500 mt-2">
-                      Prazo: {new Date(p.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      Prazo: {new Date(p.data_fim + 'T12:00:00').toLocaleDateString ('pt-BR')}
                     </div>
                   )}
                 </div>
@@ -197,7 +197,12 @@ export default function TelaRobotica({ usuario }) {
                     {ts.map(t => (
                       <div key={t.id} className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3">
                         <div>
-                          <div className="text-sm font-medium text-white">{t.titulo}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-white">{t.titulo}</div>
+                            {t.data_inicio && new Date(t.data_inicio + 'T12:00:00') > new Date() && (
+                              <span className="text-xs bg-orange-900 text-orange-300 px-2 py-0.5 rounded-full">⏳ Aguardando início</span>
+                            )}
+                          </div>
                           {t.prazo && (
                             <div className="text-xs text-gray-500 mt-0.5">
                               Prazo: {new Date(t.prazo).toLocaleDateString('pt-BR')}
