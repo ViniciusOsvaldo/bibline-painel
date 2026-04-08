@@ -152,7 +152,7 @@ export default function TelaDesignProg({ usuario }) {
                   </div>
                   {p.data_fim && (
                     <div className="text-xs text-gray-500 mt-2">
-                      Prazo: {new Date(p.data_fim).toLocaleDateString('pt-BR')}
+                      Prazo: {new Date(p.data_fim + 'T12:00:00').toLocaleDateString}
                     </div>
                   )}
                 </div>
