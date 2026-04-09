@@ -8,14 +8,12 @@ export default function TelaGestao() {
   const [tarefas, setTarefas] = useState([])
   const [carregando, setCarregando] = useState(true)
 
-  // Formulário projeto
   const [nomeProjeto, setNomeProjeto] = useState('')
   const [descProjeto, setDescProjeto] = useState('')
   const [frenteProjeto, setFrenteProjeto] = useState('robotica')
   const [inicioProjeto, setInicioProjeto] = useState('')
   const [fimProjeto, setFimProjeto] = useState('')
 
-  // Edição de projeto
   const [editandoProjeto, setEditandoProjeto] = useState(null)
   const [editNome, setEditNome] = useState('')
   const [editDesc, setEditDesc] = useState('')
@@ -23,7 +21,6 @@ export default function TelaGestao() {
   const [editInicio, setEditInicio] = useState('')
   const [editFim, setEditFim] = useState('')
 
-  // Formulário tarefa
   const [tituloTarefa, setTituloTarefa] = useState('')
   const [descTarefa, setDescTarefa] = useState('')
   const [projetoTarefa, setProjetoTarefa] = useState('')
@@ -31,7 +28,6 @@ export default function TelaGestao() {
   const [inicioTarefa, setInicioTarefa] = useState('')
   const [prazoTarefa, setPrazoTarefa] = useState('')
 
-  // Formulário meta
   const [membroMeta, setMembroMeta] = useState('')
   const [descMeta, setDescMeta] = useState('')
   const [semanaInicioMeta, setSemanaInicioMeta] = useState('')
@@ -124,6 +120,12 @@ export default function TelaGestao() {
     carregarDados()
   }
 
+  async function excluirTarefa(tarefaId) {
+    if (!window.confirm('Tem certeza que deseja excluir esta tarefa?')) return
+    await supabase.from('tarefas').delete().eq('id', tarefaId)
+    carregarDados()
+  }
+
   async function criarMeta() {
     if (!membroMeta || !descMeta || !semanaInicioMeta) return
     await supabase.from('metas_semanais').insert({
@@ -149,7 +151,6 @@ export default function TelaGestao() {
     <div className="text-white">
       <h1 className="text-2xl font-bold mb-6">Gestão</h1>
 
-      {/* Abas */}
       <div className="flex gap-2 mb-6 border-b border-gray-800 pb-2">
         {['projetos', 'tarefas', 'metas', 'membros'].map(a => (
           <button key={a} onClick={() => setAba(a)}
@@ -329,13 +330,25 @@ export default function TelaGestao() {
               {tarefas.length === 0 && <p className="text-gray-500 text-sm">Nenhuma tarefa cadastrada.</p>}
               {tarefas.map(t => {
                 const aguardando = t.data_inicio && new Date(t.data_inicio + 'T12:00:00') > new Date()
+                const membro = membros.find(m => m.id === t.responsavel_id)
+                const projeto = projetos.find(p => p.id === t.projeto_id)
                 return (
                   <div key={t.id} className="bg-gray-800 rounded-xl p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">{t.titulo}</div>
-                      {aguardando && <span className="text-xs bg-orange-900 text-orange-300 px-2 py-0.5 rounded-full">⏳ Aguardando início</span>}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium">{t.titulo}</div>
+                        {aguardando && <span className="text-xs bg-orange-900 text-orange-300 px-2 py-0.5 rounded-full">⏳ Aguardando início</span>}
+                      </div>
+                      <button
+                        onClick={() => excluirTarefa(t.id)}
+                        className="text-xs bg-red-900 hover:bg-red-800 text-red-300 px-2 py-1 rounded-lg ml-2"
+                      >
+                        🗑️
+                      </button>
                     </div>
-                    <div className="text-sm text-gray-400 mt-1">{t.membros?.nome} {t.projetos ? `· ${t.projetos.nome}` : '· Avulsa'}</div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      {membro?.nome || 'Sem responsável'} {projeto ? `· ${projeto.nome}` : '· Avulsa'}
+                    </div>
                     {t.data_inicio && <div className="text-xs text-gray-500 mt-1">Início: {new Date(t.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')}</div>}
                     <div className="text-xs text-gray-500 mt-1">Prazo: {new Date(t.prazo + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
                     <span className={`text-xs px-2 py-1 rounded-full mt-2 inline-block ${
