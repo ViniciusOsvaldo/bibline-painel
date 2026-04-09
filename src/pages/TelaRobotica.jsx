@@ -8,7 +8,7 @@ export default function TelaRobotica({ usuario }) {
   const [producao, setProducao] = useState([])
   const [descProducao, setDescProducao] = useState('')
   const [editandoProducao, setEditandoProducao] = useState(false)
-  const [carregando, setCarregando] = useState(true)
+  const [carregando, setCarregando] = useState(true)                 
 
   useEffect(() => {
     carregarDados()
@@ -22,7 +22,7 @@ export default function TelaRobotica({ usuario }) {
       supabase.from('membros').select('*').eq('frente', 'robotica').eq('ativo', true).order('nome'),
       supabase.from('projetos').select('*').in('frente', ['robotica', 'ambos']).eq('status', 'ativo'),
       supabase.from('producao_diaria').select('*, membros(nome)').eq('data', hoje),
-      supabase.from('tarefas').select('*, membros(nome, frente)')
+      supabase.from('tarefas').select('*')
     ])
 
     const membroIds = (m.data || []).map(mb => mb.id)
