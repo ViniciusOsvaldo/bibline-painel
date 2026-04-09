@@ -21,7 +21,7 @@ export default function TelaDesignProg({ usuario }) {
     const [m, p, t, prod] = await Promise.all([
       supabase.from('membros').select('*').eq('frente', 'design_programacao').eq('ativo', true).order('nome'),
       supabase.from('projetos').select('*').in('frente', ['design_programacao', 'ambos']).eq('status', 'ativo'),
-      supabase.from('tarefas').select('*, membros(nome, frente)'),
+      supabase.from('tarefas').select('*'),
       supabase.from('producao_diaria').select('*, membros(nome)').eq('data', hoje)
     ])
     setMembros(m.data || [])
